@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CyberSynth Pro - Dual Hand Visualizer & Dynamic Photo Filter Synth</title>
+  <title>CyberSynth Pro - Finger Piano & Filter Box</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -66,7 +66,7 @@
         <h1 class="text-2xl font-black font-orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-pink-500">
           CYBERSYNTH PRO
         </h1>
-        <p class="text-xs text-cyan-400/80 font-mono tracking-widest uppercase">Dual-Hand Audio Engine & Photo Filter Box</p>
+        <p class="text-xs text-cyan-400/80 font-mono tracking-widest uppercase">Finger Piano & Dual-Hand Filter Box</p>
       </div>
     </div>
 
@@ -77,7 +77,7 @@
         <span id="fps-display" class="font-orbitron font-bold text-emerald-400 text-sm">60</span>
       </div>
       <div class="bg-slate-900/90 border border-fuchsia-500/50 rounded-lg px-4 py-1.5 flex items-center gap-3 shadow-md">
-        <span class="text-xs text-fuchsia-400 font-mono uppercase tracking-wider">Active Chord:</span>
+        <span class="text-xs text-fuchsia-400 font-mono uppercase tracking-wider">Active Notes:</span>
         <span id="chord-display" class="font-orbitron font-extrabold text-lg text-fuchsia-300 tracking-wider">--</span>
       </div>
       <div class="bg-slate-900/90 border border-cyan-500/50 rounded-lg px-3 py-1.5 flex items-center gap-2">
@@ -104,9 +104,9 @@
           <div class="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-400/50 flex items-center justify-center mb-6 animate-pulse neon-glow-cyan">
             <i class="fa-solid fa-play text-3xl text-cyan-400 ml-1"></i>
           </div>
-          <h2 class="text-2xl font-orbitron font-bold text-white mb-2 tracking-wide">DUAL HAND ENGINE READY</h2>
+          <h2 class="text-2xl font-orbitron font-bold text-white mb-2 tracking-wide">FINGER PIANO READY</h2>
           <p class="text-sm text-slate-300 max-w-md mb-6 leading-relaxed">
-            Pinch fingers to play multi-finger synth chords. Spread <span class="text-cyan-400 font-bold">Both Hands</span> apart to create an interactive video filter bounding box!
+            Touch fingertips to your thumb to play notes. Pinch all 4 fingers for a chord. Spread <span class="text-cyan-400 font-bold">Both Hands</span> apart to create the filter bounding box!
           </p>
           <button id="start-btn" class="px-8 py-4 bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-slate-950 font-orbitron font-black text-lg tracking-wider rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3">
             <i class="fa-solid fa-power-off"></i> INITIALIZE DUAL SYNTH
@@ -203,439 +203,338 @@
   </main>
 
   <script>
-    /* ===================================================================
-       1. HIGH-PERFORMANCE AUDIO SYNTHESIZER
-       =================================================================== */
-    let audioCtx = null;
-    let masterGain = null;
+    // Ensures all HTML is loaded before running any code to prevent null errors
+    document.addEventListener('DOMContentLoaded', () => {
 
-    // Up to 8 Polyphonic Voices (4 for Left Hand, 4 for Right Hand)
-    const polyVoices = Array.from({ length: 8 }, () => ({
-      osc: null,
-      gain: null,
-      freq: 0,
-      noteName: '--',
-      isActive: false
-    }));
+      /* ===================================================================
+         1. HIGH-PERFORMANCE AUDIO SYNTHESIZER
+         =================================================================== */
+      let audioCtx = null;
+      let masterGain = null;
 
-    let currentWaveform = 'sine';
-    let masterVolumeLevel = 0.6;
+      // 8 Voices: 4 for Hand 1 (Bass), 4 for Hand 2 (Melody)
+      const polyVoices = Array.from({ length: 8 }, () => ({
+        osc: null,
+        gain: null,
+        freq: 0,
+        noteName: '--',
+        isActive: false
+      }));
 
-    const SCALES = {
-      cyberpunk: [
-        { name: 'C3', freq: 130.81 }, { name: 'D#3', freq: 155.56 }, { name: 'F3', freq: 174.61 },
-        { name: 'G3', freq: 196.00 }, { name: 'A#3', freq: 233.08 }, { name: 'C4', freq: 261.63 },
-        { name: 'D#4', freq: 311.13 }, { name: 'F4', freq: 349.23 }, { name: 'G4', freq: 392.00 },
-        { name: 'A#4', freq: 466.16 }, { name: 'C5', freq: 523.25 }
-      ],
-      major: [
-        { name: 'C3', freq: 130.81 }, { name: 'D3', freq: 146.83 }, { name: 'E3', freq: 164.81 },
-        { name: 'F3', freq: 174.61 }, { name: 'G3', freq: 196.00 }, { name: 'A3', freq: 220.00 },
-        { name: 'B3', freq: 246.94 }, { name: 'C4', freq: 261.63 }, { name: 'D4', freq: 293.66 }
-      ],
-      minor: [
-        { name: 'A2', freq: 110.00 }, { name: 'B2', freq: 123.47 }, { name: 'C3', freq: 130.81 },
-        { name: 'D3', freq: 146.83 }, { name: 'E3', freq: 164.81 }, { name: 'F3', freq: 174.61 },
-        { name: 'G3', freq: 196.00 }, { name: 'A3', freq: 220.00 }, { name: 'B3', freq: 246.94 }
-      ],
-      pentatonic: [
-        { name: 'D3', freq: 146.83 }, { name: 'F3', freq: 174.61 }, { name: 'G3', freq: 196.00 },
-        { name: 'A3', freq: 220.00 }, { name: 'C4', freq: 261.63 }, { name: 'D4', freq: 293.66 }
-      ]
-    };
+      let currentWaveform = 'sine';
+      let masterVolumeLevel = 0.6;
 
-    let selectedScaleKey = 'cyberpunk';
+      const SCALES = {
+        cyberpunk: [
+          { name: 'C2', freq: 65.41 }, { name: 'D#2', freq: 77.78 }, { name: 'F2', freq: 87.31 }, { name: 'G2', freq: 98.00 },
+          { name: 'C3', freq: 130.81 }, { name: 'D#3', freq: 155.56 }, { name: 'F3', freq: 174.61 }, { name: 'G3', freq: 196.00 }, 
+          { name: 'C4', freq: 261.63 }, { name: 'D#4', freq: 311.13 }, { name: 'F4', freq: 349.23 }, { name: 'G4', freq: 392.00 }
+        ],
+        major: [
+          { name: 'C2', freq: 65.41 }, { name: 'E2', freq: 82.41 }, { name: 'G2', freq: 98.00 }, { name: 'B2', freq: 123.47 },
+          { name: 'C3', freq: 130.81 }, { name: 'E3', freq: 164.81 }, { name: 'G3', freq: 196.00 }, { name: 'B3', freq: 246.94 },
+          { name: 'C4', freq: 261.63 }, { name: 'E4', freq: 329.63 }, { name: 'G4', freq: 392.00 }, { name: 'B4', freq: 493.88 }
+        ],
+        minor: [
+          { name: 'A1', freq: 55.00 }, { name: 'C2', freq: 65.41 }, { name: 'E2', freq: 82.41 }, { name: 'G2', freq: 98.00 },
+          { name: 'A2', freq: 110.00 }, { name: 'C3', freq: 130.81 }, { name: 'E3', freq: 164.81 }, { name: 'G3', freq: 196.00 },
+          { name: 'A3', freq: 220.00 }, { name: 'C4', freq: 261.63 }, { name: 'E4', freq: 329.63 }, { name: 'G4', freq: 392.00 }
+        ],
+        pentatonic: [
+          { name: 'D2', freq: 73.42 }, { name: 'F2', freq: 87.31 }, { name: 'G2', freq: 98.00 }, { name: 'A2', freq: 110.00 },
+          { name: 'D3', freq: 146.83 }, { name: 'F3', freq: 174.61 }, { name: 'G3', freq: 196.00 }, { name: 'A3', freq: 220.00 },
+          { name: 'D4', freq: 293.66 }, { name: 'F4', freq: 349.23 }, { name: 'G4', freq: 392.00 }, { name: 'A4', freq: 440.00 }
+        ]
+      };
 
-    function initAudioEngine() {
-      if (audioCtx) return;
+      let selectedScaleKey = 'cyberpunk';
 
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(masterVolumeLevel, audioCtx.currentTime);
-      masterGain.connect(audioCtx.destination);
+      function initAudioEngine() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(masterVolumeLevel, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
 
-      for (let i = 0; i < 8; i++) {
-        const osc = audioCtx.createOscillator();
-        const voiceGain = audioCtx.createGain();
-
-        osc.type = currentWaveform;
-        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-        voiceGain.gain.setValueAtTime(0, audioCtx.currentTime);
-
-        osc.connect(voiceGain);
-        voiceGain.connect(masterGain);
-        osc.start();
-
-        polyVoices[i].osc = osc;
-        polyVoices[i].gain = voiceGain;
+        for (let i = 0; i < 8; i++) {
+          const osc = audioCtx.createOscillator();
+          const voiceGain = audioCtx.createGain();
+          osc.type = currentWaveform;
+          osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+          voiceGain.gain.setValueAtTime(0, audioCtx.currentTime);
+          osc.connect(voiceGain);
+          voiceGain.connect(masterGain);
+          osc.start();
+          polyVoices[i].osc = osc;
+          polyVoices[i].gain = voiceGain;
+        }
       }
-    }
 
-    function setWaveform(type) {
-      currentWaveform = type;
-      polyVoices.forEach(v => {
-        if (v.osc) v.osc.type = type;
+      function setWaveform(type) {
+        currentWaveform = type;
+        polyVoices.forEach(v => { if (v.osc) v.osc.type = type; });
+      }
+
+      /* ===================================================================
+         2. LIGHTWEIGHT CANVAS & PARTICLE SYSTEM
+         =================================================================== */
+      const canvas = document.getElementById('output-canvas');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const videoElement = document.getElementById('webcam');
+
+      function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      let lastFrameTime = performance.now();
+      let frameCount = 0;
+      
+      function updateFPS() {
+        const now = performance.now();
+        frameCount++;
+        if (now - lastFrameTime >= 1000) {
+          document.getElementById('fps-display').innerText = Math.round((frameCount * 1000) / (now - lastFrameTime));
+          frameCount = 0;
+          lastFrameTime = now;
+        }
+      }
+
+      class Particle {
+        constructor() { this.reset(0, 0, '#ffffff'); }
+        reset(x, y, color) {
+          this.x = x; this.y = y;
+          this.vx = (Math.random() - 0.5) * 4; this.vy = (Math.random() - 0.5) * 4;
+          this.radius = Math.random() * 3 + 1.5; this.color = color;
+          this.alpha = 1; this.decay = Math.random() * 0.04 + 0.02;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
+        draw(context) {
+          context.globalAlpha = Math.max(0, this.alpha);
+          context.beginPath(); context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          context.fillStyle = this.color; context.fill();
+        }
+      }
+
+      const MAX_PARTICLES = 40;
+      const particles = [];
+      function spawnParticle(x, y, color) {
+        if (!document.getElementById('toggle-particles').checked) return;
+        if (particles.length < MAX_PARTICLES) {
+          const p = new Particle(); p.reset(x, y, color); particles.push(p);
+        }
+      }
+
+      /* ===================================================================
+         3. HAND SKELETON CONNECTIONS & FILTER MAPS
+         =================================================================== */
+      const HAND_CONNECTIONS = [
+        [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12], 
+        [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [0, 17], [17, 18], [18, 19], [19, 20]
+      ];
+      const FINGER_COLORS = ['#06b6d4', '#ec4899', '#f59e0b', '#10b981'];
+
+      let activeFilterMode = 'cyber';
+      const PHOTO_FILTERS = {
+        cyber: 'contrast(1.4) hue-rotate(180deg) saturate(2)',
+        thermal: 'contrast(2) invert(1) saturate(3) hue-rotate(90deg)',
+        glitch: 'grayscale(1) contrast(2) brightness(1.2)',
+        sepia: 'sepia(0.9) contrast(1.2) saturate(1.5)',
+        invert: 'invert(1) hue-rotate(240deg) contrast(1.3)',
+        contrast: 'contrast(2.5) saturate(0.8) brightness(0.9)'
+      };
+
+      /* ===================================================================
+         4. MEDIAPIPE HAND TRACKING & FINGER PIANO LOGIC
+         =================================================================== */
+      const hands = new window.Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
       });
-    }
 
-    function quantizeToScale(rawFreq) {
-      const scale = SCALES[selectedScaleKey];
-      let closest = scale[0];
-      let minDiff = Math.abs(rawFreq - scale[0].freq);
+      hands.setOptions({
+        maxNumHands: 2, 
+        modelComplexity: 0, 
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65
+      });
 
-      for (let i = 1; i < scale.length; i++) {
-        const diff = Math.abs(rawFreq - scale[i].freq);
-        if (diff < minDiff) {
-          minDiff = diff;
-          closest = scale[i];
+      hands.onResults(onResults);
+
+      // Distance threshold for a fingertip touching the thumb tip
+      const TOUCH_THRESHOLD = 0.06;
+
+      function onResults(results) {
+        updateFPS();
+
+        ctx.save();
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+        // Render Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.update();
+          if (p.alpha <= 0) particles.splice(i, 1);
+          else p.draw(ctx);
         }
-      }
-      return closest;
-    }
+        ctx.globalAlpha = 1.0;
 
-    /* ===================================================================
-       2. LIGHTWEIGHT CANVAS & PARTICLE SYSTEM
-       =================================================================== */
-    const canvas = document.getElementById('output-canvas');
-    const ctx = canvas.getContext('2d', { alpha: false });
-    const videoElement = document.getElementById('webcam');
+        const detectedHands = results.multiHandLandmarks || [];
+        document.getElementById('hands-count-label').innerText = `${detectedHands.length} / 2`;
 
-    function resizeCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+        let activeChordNotes = [];
+        let handBoundingBoxes = [];
 
-    // FPS Meter
-    let lastFrameTime = performance.now();
-    let frameCount = 0;
-    let fps = 60;
+        detectedHands.forEach((landmarks, handIdx) => {
+          const pts = landmarks.map(lm => ({ x: lm.x * canvas.width, y: lm.y * canvas.height }));
+          const rawPts = landmarks; // For threshold calculation (resolution independent)
 
-    function updateFPS() {
-      const now = performance.now();
-      frameCount++;
-      if (now - lastFrameTime >= 1000) {
-        fps = Math.round((frameCount * 1000) / (now - lastFrameTime));
-        document.getElementById('fps-display').innerText = fps;
-        frameCount = 0;
-        lastFrameTime = now;
-      }
-    }
+          // Bounding box for the photo filter
+          let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
+          pts.forEach(p => {
+            if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+          });
+          handBoundingBoxes.push({ minX, maxX, minY, maxY });
 
-    // Lightweight Pool-Based Particle System
-    class Particle {
-      constructor() {
-        this.reset(0, 0, '#ffffff');
-      }
+          const thumb = rawPts[4];
+          const fingerTipsRaw = [rawPts[8], rawPts[12], rawPts[16], rawPts[20]];
+          
+          let touching = [false, false, false, false];
+          let touchCount = 0;
 
-      reset(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.vx = (Math.random() - 0.5) * 4;
-        this.vy = (Math.random() - 0.5) * 4;
-        this.radius = Math.random() * 3 + 1.5;
-        this.color = color;
-        this.alpha = 1;
-        this.decay = Math.random() * 0.04 + 0.02;
-      }
+          // Check which fingers are touching the thumb
+          fingerTipsRaw.forEach((tip, idx) => {
+            const dist = Math.sqrt(Math.pow(thumb.x - tip.x, 2) + Math.pow(thumb.y - tip.y, 2));
+            if (dist < TOUCH_THRESHOLD) {
+              touching[idx] = true;
+              touchCount++;
+            }
+          });
 
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.alpha -= this.decay;
-      }
+          // If all 4 touch = Fist/Knuckles mode
+          const isFist = touchCount === 4;
 
-      draw(context) {
-        context.globalAlpha = Math.max(0, this.alpha);
-        context.beginPath();
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        context.fillStyle = this.color;
-        context.fill();
-      }
-    }
+          const scale = SCALES[selectedScaleKey];
+          // Hand 0 (Left/First detected) = Bass (first 4 notes of scale)
+          // Hand 1 (Right/Second detected) = Melody (last 4 notes of scale)
+          const scaleOffset = handIdx === 0 ? 0 : scale.length - 4;
 
-    const MAX_PARTICLES = 40;
-    const particles = [];
+          fingerTipsRaw.forEach((tip, fIdx) => {
+            const voiceIdx = handIdx * 4 + fIdx;
+            const noteObj = scale[scaleOffset + fIdx];
+            const isPlaying = touching[fIdx] || isFist;
 
-    function spawnParticle(x, y, color) {
-      if (!document.getElementById('toggle-particles').checked) return;
-      if (particles.length < MAX_PARTICLES) {
-        const p = new Particle();
-        p.reset(x, y, color);
-        particles.push(p);
-      }
-    }
+            if (audioCtx) {
+              const targetGain = isPlaying ? 0.25 : 0.0;
+              polyVoices[voiceIdx].osc.frequency.setTargetAtTime(noteObj.freq, audioCtx.currentTime, 0.02);
+              polyVoices[voiceIdx].gain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.03);
 
-    /* ===================================================================
-       3. HAND SKELETON CONNECTIONS & FILTER MAPS
-       =================================================================== */
-    const HAND_CONNECTIONS = [
-      [0, 1], [1, 2], [2, 3], [3, 4],     // Thumb
-      [0, 5], [5, 6], [6, 7], [7, 8],     // Index
-      [5, 9], [9, 10], [10, 11], [11, 12], // Middle
-      [9, 13], [13, 14], [14, 15], [15, 16], // Ring
-      [13, 17], [0, 17], [17, 18], [18, 19], [19, 20] // Pinky & Palm
-    ];
-
-    const FINGER_COLORS = ['#06b6d4', '#ec4899', '#f59e0b', '#10b981'];
-
-    let activeFilterMode = 'cyber';
-
-    const PHOTO_FILTERS = {
-      cyber: 'contrast(1.4) hue-rotate(180deg) saturate(2)',
-      thermal: 'contrast(2) invert(1) saturate(3) hue-rotate(90deg)',
-      glitch: 'grayscale(1) contrast(2) brightness(1.2)',
-      sepia: 'sepia(0.9) contrast(1.2) saturate(1.5)',
-      invert: 'invert(1) hue-rotate(240deg) contrast(1.3)',
-      contrast: 'contrast(2.5) saturate(0.8) brightness(0.9)'
-    };
-
-    /* ===================================================================
-       4. MEDIAPIPE HAND TRACKING & RENDER LOOP
-       =================================================================== */
-    const hands = new Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-    });
-
-    hands.setOptions({
-      maxNumHands: 2, // Dual hand tracking
-      modelComplexity: 0, // Optimized lightweight model for fast FPS
-      minDetectionConfidence: 0.65,
-      minTrackingConfidence: 0.65
-    });
-
-    hands.onResults(onResults);
-
-    function onResults(results) {
-      updateFPS();
-
-      // Clear base webcam background
-      ctx.save();
-      ctx.globalAlpha = 1.0;
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-
-      // Render Particle Layer
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.update();
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-        } else {
-          p.draw(ctx);
-        }
-      }
-      ctx.globalAlpha = 1.0;
-
-      const detectedHands = results.multiHandLandmarks || [];
-      document.getElementById('hands-count-label').innerText = `${detectedHands.length} / 2`;
-
-      let activeChordNotes = [];
-      let handBoundingBoxes = [];
-
-      // Process each detected hand
-      detectedHands.forEach((landmarks, handIdx) => {
-        const pts = landmarks.map(lm => ({
-          x: lm.x * canvas.width,
-          y: lm.y * canvas.height
-        }));
-
-        // Calculate Hand Bounding Min/Max for Filter Box
-        let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
-        pts.forEach(p => {
-          if (p.x < minX) minX = p.x;
-          if (p.x > maxX) maxX = p.x;
-          if (p.y < minY) minY = p.y;
-          if (p.y > maxY) maxY = p.y;
-        });
-        handBoundingBoxes.push({ minX, maxX, minY, maxY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 });
-
-        const thumbTip = pts[4];
-        const fingerTips = [pts[8], pts[12], pts[16], pts[20]];
-
-        // Process audio polyphony per hand (Voice offset: Hand 0 -> 0..3, Hand 1 -> 4..7)
-        fingerTips.forEach((tip, fIdx) => {
-          const voiceIdx = handIdx * 4 + fIdx;
-          const dx = thumbTip.x - tip.x;
-          const dy = thumbTip.y - tip.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          const minDist = 20, maxDist = 260;
-          const clamped = Math.max(minDist, Math.min(maxDist, distance));
-          const normalized = (clamped - minDist) / (maxDist - minDist);
-
-          const baseFreq = (handIdx === 0 ? 110 : 220) + normalized * 400;
-          const noteObj = quantizeToScale(baseFreq);
-
-          if (audioCtx) {
-            const isPlaying = distance > 22;
-            const targetGain = isPlaying ? 0.2 : 0.0;
-
-            polyVoices[voiceIdx].osc.frequency.setTargetAtTime(noteObj.freq, audioCtx.currentTime, 0.03);
-            polyVoices[voiceIdx].gain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.03);
-
-            if (isPlaying) {
-              activeChordNotes.push(noteObj.name);
-
-              if (document.getElementById('toggle-lasers').checked) {
-                drawLaserLine(thumbTip, tip, FINGER_COLORS[fIdx]);
-              }
-
-              if (Math.random() > 0.6) {
-                spawnParticle(tip.x, tip.y, FINGER_COLORS[fIdx]);
+              if (isPlaying) {
+                activeChordNotes.push(noteObj.name);
+                const screenTip = pts[[8, 12, 16, 20][fIdx]];
+                const screenThumb = pts[4];
+                
+                if (document.getElementById('toggle-lasers').checked) {
+                  ctx.beginPath(); ctx.moveTo(screenThumb.x, screenThumb.y); ctx.lineTo(screenTip.x, screenTip.y);
+                  ctx.lineWidth = 4; ctx.strokeStyle = FINGER_COLORS[fIdx]; ctx.stroke();
+                }
+                if (Math.random() > 0.5) spawnParticle(screenTip.x, screenTip.y, FINGER_COLORS[fIdx]);
               }
             }
-          }
+          });
+
+          // Draw Skeletons
+          HAND_CONNECTIONS.forEach(([s, e]) => {
+            ctx.beginPath(); ctx.moveTo(pts[s].x, pts[s].y); ctx.lineTo(pts[e].x, pts[e].y);
+            ctx.lineWidth = 2; ctx.strokeStyle = handIdx === 0 ? 'rgba(6, 182, 212, 0.6)' : 'rgba(236, 72, 153, 0.6)'; ctx.stroke();
+          });
+          pts.forEach((pt, i) => {
+            const isTip = [4, 8, 12, 16, 20].includes(i);
+            ctx.beginPath(); ctx.arc(pt.x, pt.y, isTip ? 6 : 3, 0, Math.PI * 2);
+            ctx.fillStyle = isTip ? '#ec4899' : '#06b6d4'; ctx.fill();
+          });
         });
 
-        // Draw Skeleton Lines and Joint Circles
-        HAND_CONNECTIONS.forEach(([s, e]) => {
-          ctx.beginPath();
-          ctx.moveTo(pts[s].x, pts[s].y);
-          ctx.lineTo(pts[e].x, pts[e].y);
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = handIdx === 0 ? 'rgba(6, 182, 212, 0.7)' : 'rgba(236, 72, 153, 0.7)';
-          ctx.stroke();
-        });
+        // Bounding Box Photo Filter when 2 hands spread apart
+        if (handBoundingBoxes.length === 2) {
+          const b1 = handBoundingBoxes[0]; const b2 = handBoundingBoxes[1];
+          const boxX = Math.min(b1.minX, b2.minX) - 20; const boxY = Math.min(b1.minY, b2.minY) - 20;
+          const boxW = Math.max(b1.maxX, b2.maxX) - boxX + 20; const boxH = Math.max(b1.maxY, b2.maxY) - boxY + 20;
 
-        pts.forEach((pt, i) => {
-          const isTip = [4, 8, 12, 16, 20].includes(i);
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, isTip ? 6 : 3, 0, Math.PI * 2);
-          ctx.fillStyle = isTip ? '#ec4899' : '#06b6d4';
-          ctx.fill();
-        });
-      });
+          ctx.save(); ctx.beginPath(); ctx.rect(boxX, boxY, boxW, boxH); ctx.clip();
+          ctx.filter = PHOTO_FILTERS[activeFilterMode] || PHOTO_FILTERS.cyber;
+          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+          ctx.filter = 'none'; ctx.restore();
 
-      // Bounding Box Photo Filter (Active when 2 hands spread apart)
-      if (handBoundingBoxes.length === 2) {
-        const b1 = handBoundingBoxes[0];
-        const b2 = handBoundingBoxes[1];
+          ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
+          ctx.strokeRect(boxX, boxY, boxW, boxH); ctx.setLineDash([]);
+        }
 
-        const boxX = Math.min(b1.minX, b2.minX) - 20;
-        const boxY = Math.min(b1.minY, b2.minY) - 20;
-        const boxW = Math.max(b1.maxX, b2.maxX) - boxX + 20;
-        const boxH = Math.max(b1.maxY, b2.maxY) - boxY + 20;
+        if (detectedHands.length === 0 && audioCtx) {
+          polyVoices.forEach(v => v.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05));
+        }
 
-        // Apply Filter inside clipped rectangular frame
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(boxX, boxY, boxW, boxH);
-        ctx.clip();
-
-        ctx.filter = PHOTO_FILTERS[activeFilterMode] || PHOTO_FILTERS.cyber;
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-        ctx.filter = 'none';
+        document.getElementById('chord-display').innerText = activeChordNotes.length > 0 ? [...new Set(activeChordNotes)].join(' - ') : 'MUTE';
         ctx.restore();
+      }
 
-        // Draw Illuminated Laser Boundary Frame
-        ctx.strokeStyle = '#06b6d4';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([8, 6]);
-        ctx.strokeRect(boxX, boxY, boxW, boxH);
-        ctx.setLineDash([]);
+      /* ===================================================================
+         5. CAMERA CONTROLLER & UI EVENT LISTENERS
+         =================================================================== */
+      const camera = new window.Camera(videoElement, {
+        onFrame: async () => { await hands.send({ image: videoElement }); },
+        width: 640, height: 480
+      });
 
-        // Corner Accent Markers
-        const cornerLen = 16;
-        ctx.strokeStyle = '#ec4899';
-        ctx.lineWidth = 4;
+      document.getElementById('start-btn').addEventListener('click', () => {
+        initAudioEngine();
+        camera.start();
+        document.getElementById('start-overlay').classList.add('opacity-0', 'pointer-events-none');
+        document.getElementById('hud-filter-badge').classList.remove('hidden');
+        document.getElementById('hud-filter-badge').classList.add('flex');
         
-        // Top-Left Corner
-        ctx.beginPath();
-        ctx.moveTo(boxX, boxY + cornerLen); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX + cornerLen, boxY);
-        ctx.stroke();
-
-        // Bottom-Right Corner
-        ctx.beginPath();
-        ctx.moveTo(boxX + boxW, boxY + boxH - cornerLen); ctx.lineTo(boxX + boxW, boxY + boxH); ctx.lineTo(boxX + boxW - cornerLen, boxY + boxH);
-        ctx.stroke();
-      }
-
-      // Handle sound muting when no hands detected
-      if (detectedHands.length === 0 && audioCtx) {
-        polyVoices.forEach(v => v.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05));
-      }
-
-      // Update UI Chord Badge
-      document.getElementById('chord-display').innerText = activeChordNotes.length > 0 ? activeChordNotes.join(' - ') : 'MUTE';
-
-      ctx.restore();
-    }
-
-    function drawLaserLine(p1, p2, color) {
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    }
-
-    /* ===================================================================
-       5. CAMERA CONTROLLER & UI EVENT LISTENERS
-       =================================================================== */
-    const camera = new Camera(videoElement, {
-      onFrame: async () => {
-        await hands.send({ image: videoElement });
-      },
-      width: 640,
-      height: 480
-    });
-
-    document.getElementById('start-btn').addEventListener('click', () => {
-      initAudioEngine();
-      camera.start();
-
-      document.getElementById('start-overlay').classList.add('opacity-0', 'pointer-events-none');
-      document.getElementById('hud-filter-badge').classList.remove('hidden');
-      document.getElementById('hud-filter-badge').classList.add('flex');
-
-      const ind = document.getElementById('status-indicator');
-      ind.classList.remove('bg-amber-500');
-      ind.classList.add('bg-emerald-500');
-      document.getElementById('status-text').innerText = 'DUAL ENGINE ACTIVE';
-    });
-
-    // Filter Buttons Selector
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.classList.remove('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
-          b.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
-        });
-        const target = e.currentTarget;
-        target.classList.add('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
-        activeFilterMode = target.dataset.filter;
-        document.getElementById('active-filter-label').innerText = target.innerText;
+        const ind = document.getElementById('status-indicator');
+        ind.classList.remove('bg-amber-500'); ind.classList.add('bg-emerald-500');
+        document.getElementById('status-text').innerText = 'DUAL ENGINE ACTIVE';
       });
-    });
 
-    // Waveform Selector Buttons
-    document.querySelectorAll('.wave-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.wave-btn').forEach(b => {
-          b.classList.remove('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
-          b.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
+            b.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
+          });
+          const target = e.currentTarget;
+          target.classList.add('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
+          activeFilterMode = target.dataset.filter;
+          document.getElementById('active-filter-label').innerText = target.innerText;
         });
-        const target = e.currentTarget;
-        target.classList.add('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
-        setWaveform(target.dataset.wave);
       });
-    });
 
-    // Scale Selector
-    document.getElementById('scale-select').addEventListener('change', (e) => {
-      selectedScaleKey = e.target.value;
-    });
+      document.querySelectorAll('.wave-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.wave-btn').forEach(b => {
+            b.classList.remove('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
+            b.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
+          });
+          const target = e.currentTarget;
+          target.classList.add('active', 'bg-cyan-950/80', 'border-cyan-500', 'text-cyan-300');
+          setWaveform(target.dataset.wave);
+        });
+      });
 
-    // Volume Slider
-    document.getElementById('volume-slider').addEventListener('input', (e) => {
-      const val = e.target.value / 100;
-      masterVolumeLevel = val;
-      if (masterGain && audioCtx) {
-        masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.02);
-      }
-      document.getElementById('volume-val').innerText = `${e.target.value}%`;
+      document.getElementById('scale-select').addEventListener('change', (e) => { selectedScaleKey = e.target.value; });
+      
+      document.getElementById('volume-slider').addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        masterVolumeLevel = val;
+        if (masterGain && audioCtx) masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.02);
+        document.getElementById('volume-val').innerText = `${e.target.value}%`;
+      });
+      
     });
   </script>
 </body>
