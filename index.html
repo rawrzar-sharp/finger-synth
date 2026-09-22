@@ -25,18 +25,14 @@
       overflow-x: hidden;
     }
 
-    .font-orbitron {
-      font-family: 'Orbitron', sans-serif;
-    }
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
 
     .neon-border {
       box-shadow: 0 0 12px rgba(6, 182, 212, 0.35), inset 0 0 12px rgba(6, 182, 212, 0.15);
       border: 1px solid rgba(6, 182, 212, 0.5);
     }
 
-    .neon-glow-cyan {
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
-    }
+    .neon-glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.5); }
 
     .glass-card {
       background: rgba(15, 23, 42, 0.8);
@@ -45,13 +41,9 @@
     }
 
     /* Mirror canvas transform for natural webcam interaction */
-    #webcam, #output-canvas {
-      transform: scaleX(-1);
-    }
+    #webcam, #output-canvas { transform: scaleX(-1); }
 
-    input[type=range] {
-      accent-color: #06b6d4;
-    }
+    input[type=range] { accent-color: #06b6d4; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between relative selection:bg-cyan-500 selection:text-black">
@@ -70,7 +62,6 @@
       </div>
     </div>
 
-    <!-- HUD Stats & Chord Badges -->
     <div class="flex flex-wrap items-center gap-3">
       <div class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-3 py-1.5 flex items-center gap-2">
         <span class="text-xs text-slate-400 font-mono">FPS:</span>
@@ -90,16 +81,10 @@
   <!-- Main Workspace -->
   <main class="flex-1 w-full max-w-7xl mx-auto p-4 flex flex-col lg:flex-row gap-6 items-center justify-center relative z-10">
     
-    <!-- Left Column: Video & Canvas Viewport -->
     <div class="w-full lg:w-2/3 flex flex-col items-center">
       <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden neon-border bg-slate-950 flex items-center justify-center shadow-2xl">
-        <!-- Hidden Video Source -->
         <video id="webcam" class="hidden" autoplay playsinline></video>
-
-        <!-- Main Visual Canvas -->
         <canvas id="output-canvas" class="w-full h-full object-cover"></canvas>
-
-        <!-- Start Overlay -->
         <div id="start-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-500">
           <div class="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-400/50 flex items-center justify-center mb-6 animate-pulse neon-glow-cyan">
             <i class="fa-solid fa-play text-3xl text-cyan-400 ml-1"></i>
@@ -112,8 +97,6 @@
             <i class="fa-solid fa-power-off"></i> INITIALIZE DUAL SYNTH
           </button>
         </div>
-
-        <!-- HUD Filter Info Badge -->
         <div id="hud-filter-badge" class="absolute top-4 left-4 pointer-events-none hidden flex-col gap-1 text-xs font-mono bg-slate-950/80 p-3 rounded-lg border border-cyan-500/30 backdrop-blur-sm z-20">
           <div class="text-cyan-400 font-bold font-orbitron border-b border-cyan-900/50 pb-1">HAND BOX FILTER</div>
           <div class="text-fuchsia-300 flex justify-between gap-4"><span>FILTER:</span><span id="active-filter-label" class="font-bold text-cyan-200">CYBER NEON</span></div>
@@ -122,10 +105,7 @@
       </div>
     </div>
 
-    <!-- Right Column: Control Panel -->
     <div class="w-full lg:w-1/3 flex flex-col gap-5">
-      
-      <!-- Photo Filter Control Panel -->
       <div class="glass-card rounded-2xl p-5 border border-fuchsia-500/30 shadow-xl flex flex-col gap-4">
         <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
           <h3 class="font-orbitron font-bold text-fuchsia-400 flex items-center gap-2">
@@ -133,7 +113,6 @@
           </h3>
           <span class="text-xs font-mono text-cyan-300">DUAL HAND</span>
         </div>
-
         <div>
           <label class="block text-xs font-mono uppercase text-slate-300 mb-2">Box Filter Effect Mode</label>
           <div class="grid grid-cols-2 gap-2">
@@ -147,15 +126,12 @@
         </div>
       </div>
 
-      <!-- Synth Engine Controls -->
       <div class="glass-card rounded-2xl p-5 border border-cyan-500/30 shadow-xl flex flex-col gap-4">
         <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
           <h3 class="font-orbitron font-bold text-cyan-400 flex items-center gap-2">
             <i class="fa-solid fa-sliders text-fuchsia-400"></i> POLYPHONIC SYNTH ENGINE
           </h3>
         </div>
-
-        <!-- Waveform Selection -->
         <div>
           <label class="block text-xs font-mono uppercase text-slate-300 mb-2">Oscillator Waveform</label>
           <div class="grid grid-cols-4 gap-2">
@@ -165,8 +141,6 @@
             <button data-wave="triangle" class="wave-btn px-2.5 py-2 bg-slate-900 border border-slate-700 text-slate-400 rounded-lg text-xs font-bold font-orbitron hover:bg-cyan-800/50 hover:text-cyan-300 transition">TRI</button>
           </div>
         </div>
-
-        <!-- Musical Scale Select -->
         <div>
           <label class="block text-xs font-mono uppercase text-slate-300 mb-2">Scale Quantizer</label>
           <select id="scale-select" class="w-full bg-slate-900 border border-cyan-500/40 rounded-lg p-2.5 text-xs text-cyan-200 font-mono focus:outline-none focus:border-cyan-400">
@@ -176,8 +150,7 @@
             <option value="pentatonic">D Pentatonic Minor (Sci-Fi)</option>
           </select>
         </div>
-
-        <!-- Master Volume & Visual Toggles -->
+        
         <div class="flex flex-col gap-3">
           <div>
             <div class="flex justify-between text-xs font-mono text-slate-300 mb-1">
@@ -186,7 +159,7 @@
             </div>
             <input type="range" id="volume-slider" min="0" max="100" value="60" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
           </div>
-
+          
           <div class="pt-2 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-300">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="toggle-particles" checked class="w-4 h-4 rounded border-slate-700 text-cyan-500 bg-slate-900">
@@ -194,31 +167,34 @@
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="toggle-lasers" checked class="w-4 h-4 rounded border-slate-700 text-cyan-500 bg-slate-900">
-              <span>Laser Arc Beams</span>
+              <span>Laser Beams</span>
             </label>
           </div>
+          <!-- New Skeleton and Filter Box Toggles -->
+          <div class="pt-2 border-t border-slate-800 flex justify-between text-xs font-mono text-slate-300">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="toggle-skeleton" checked class="w-4 h-4 rounded border-slate-700 text-cyan-500 bg-slate-900">
+              <span>Show Skeleton</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="toggle-filter-box" checked class="w-4 h-4 rounded border-slate-700 text-cyan-500 bg-slate-900">
+              <span>Filter Box</span>
+            </label>
+          </div>
+
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    // Ensures all HTML is loaded before running any code to prevent null errors
     document.addEventListener('DOMContentLoaded', () => {
 
-      /* ===================================================================
-         1. HIGH-PERFORMANCE AUDIO SYNTHESIZER
-         =================================================================== */
       let audioCtx = null;
       let masterGain = null;
 
-      // 8 Voices: 4 for Hand 1 (Bass), 4 for Hand 2 (Melody)
       const polyVoices = Array.from({ length: 8 }, () => ({
-        osc: null,
-        gain: null,
-        freq: 0,
-        noteName: '--',
-        isActive: false
+        osc: null, gain: null, freq: 0, noteName: '--', isActive: false
       }));
 
       let currentWaveform = 'sine';
@@ -275,9 +251,6 @@
         polyVoices.forEach(v => { if (v.osc) v.osc.type = type; });
       }
 
-      /* ===================================================================
-         2. LIGHTWEIGHT CANVAS & PARTICLE SYSTEM
-         =================================================================== */
       const canvas = document.getElementById('output-canvas');
       const ctx = canvas.getContext('2d', { alpha: false });
       const videoElement = document.getElementById('webcam');
@@ -327,14 +300,13 @@
         }
       }
 
-      /* ===================================================================
-         3. HAND SKELETON CONNECTIONS & FILTER MAPS
-         =================================================================== */
       const HAND_CONNECTIONS = [
         [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12], 
         [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [0, 17], [17, 18], [18, 19], [19, 20]
       ];
       const FINGER_COLORS = ['#06b6d4', '#ec4899', '#f59e0b', '#10b981'];
+      // Array defining just the fingertip endpoints
+      const TIP_INDICES = [4, 8, 12, 16, 20];
 
       let activeFilterMode = 'cyber';
       const PHOTO_FILTERS = {
@@ -346,23 +318,18 @@
         contrast: 'contrast(2.5) saturate(0.8) brightness(0.9)'
       };
 
-      /* ===================================================================
-         4. MEDIAPIPE HAND TRACKING & FINGER PIANO LOGIC
-         =================================================================== */
       const hands = new window.Hands({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
       });
 
       hands.setOptions({
         maxNumHands: 2, 
-        modelComplexity: 0, 
+        modelComplexity: 1, // Increased to 1 for much tighter joint accuracy
         minDetectionConfidence: 0.65,
         minTrackingConfidence: 0.65
       });
 
       hands.onResults(onResults);
-
-      // Distance threshold for a fingertip touching the thumb tip
       const TOUCH_THRESHOLD = 0.06;
 
       function onResults(results) {
@@ -372,7 +339,6 @@
         ctx.globalAlpha = 1.0;
         ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-        // Render Particles
         for (let i = particles.length - 1; i >= 0; i--) {
           const p = particles[i];
           p.update();
@@ -389,11 +355,12 @@
 
         detectedHands.forEach((landmarks, handIdx) => {
           const pts = landmarks.map(lm => ({ x: lm.x * canvas.width, y: lm.y * canvas.height }));
-          const rawPts = landmarks; // For threshold calculation (resolution independent)
+          const rawPts = landmarks;
 
-          // Bounding box for the photo filter
+          // Bounding box using ONLY fingertips to keep the box mapped exactly to the fingers
           let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
-          pts.forEach(p => {
+          TIP_INDICES.forEach(idx => {
+            const p = pts[idx];
             if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
             if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
           });
@@ -405,7 +372,6 @@
           let touching = [false, false, false, false];
           let touchCount = 0;
 
-          // Check which fingers are touching the thumb
           fingerTipsRaw.forEach((tip, idx) => {
             const dist = Math.sqrt(Math.pow(thumb.x - tip.x, 2) + Math.pow(thumb.y - tip.y, 2));
             if (dist < TOUCH_THRESHOLD) {
@@ -414,12 +380,8 @@
             }
           });
 
-          // If all 4 touch = Fist/Knuckles mode
           const isFist = touchCount === 4;
-
           const scale = SCALES[selectedScaleKey];
-          // Hand 0 (Left/First detected) = Bass (first 4 notes of scale)
-          // Hand 1 (Right/Second detected) = Melody (last 4 notes of scale)
           const scaleOffset = handIdx === 0 ? 0 : scale.length - 4;
 
           fingerTipsRaw.forEach((tip, fIdx) => {
@@ -446,20 +408,22 @@
             }
           });
 
-          // Draw Skeletons
-          HAND_CONNECTIONS.forEach(([s, e]) => {
-            ctx.beginPath(); ctx.moveTo(pts[s].x, pts[s].y); ctx.lineTo(pts[e].x, pts[e].y);
-            ctx.lineWidth = 2; ctx.strokeStyle = handIdx === 0 ? 'rgba(6, 182, 212, 0.6)' : 'rgba(236, 72, 153, 0.6)'; ctx.stroke();
-          });
-          pts.forEach((pt, i) => {
-            const isTip = [4, 8, 12, 16, 20].includes(i);
-            ctx.beginPath(); ctx.arc(pt.x, pt.y, isTip ? 6 : 3, 0, Math.PI * 2);
-            ctx.fillStyle = isTip ? '#ec4899' : '#06b6d4'; ctx.fill();
-          });
+          // Toggleable Skeleton
+          if (document.getElementById('toggle-skeleton').checked) {
+            HAND_CONNECTIONS.forEach(([s, e]) => {
+              ctx.beginPath(); ctx.moveTo(pts[s].x, pts[s].y); ctx.lineTo(pts[e].x, pts[e].y);
+              ctx.lineWidth = 2; ctx.strokeStyle = handIdx === 0 ? 'rgba(6, 182, 212, 0.6)' : 'rgba(236, 72, 153, 0.6)'; ctx.stroke();
+            });
+            pts.forEach((pt, i) => {
+              const isTip = TIP_INDICES.includes(i);
+              ctx.beginPath(); ctx.arc(pt.x, pt.y, isTip ? 6 : 3, 0, Math.PI * 2);
+              ctx.fillStyle = isTip ? '#ec4899' : '#06b6d4'; ctx.fill();
+            });
+          }
         });
 
-        // Bounding Box Photo Filter when 2 hands spread apart
-        if (handBoundingBoxes.length === 2) {
+        // Toggleable Filter Box
+        if (handBoundingBoxes.length === 2 && document.getElementById('toggle-filter-box').checked) {
           const b1 = handBoundingBoxes[0]; const b2 = handBoundingBoxes[1];
           const boxX = Math.min(b1.minX, b2.minX) - 20; const boxY = Math.min(b1.minY, b2.minY) - 20;
           const boxW = Math.max(b1.maxX, b2.maxX) - boxX + 20; const boxH = Math.max(b1.maxY, b2.maxY) - boxY + 20;
@@ -481,9 +445,6 @@
         ctx.restore();
       }
 
-      /* ===================================================================
-         5. CAMERA CONTROLLER & UI EVENT LISTENERS
-         =================================================================== */
       const camera = new window.Camera(videoElement, {
         onFrame: async () => { await hands.send({ image: videoElement }); },
         width: 640, height: 480
